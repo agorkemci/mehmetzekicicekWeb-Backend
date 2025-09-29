@@ -86,7 +86,7 @@ db.serialize(() => {
     // seed admin if not exists
     db.get('SELECT * FROM users WHERE username = ?', ['admin'], (err, row) => {
         if (!row) {
-            db.run('INSERT INTO users (username, password) VALUES (?,?)', ['admin', 'admin123'])
+            db.run('INSERT INTO users (username, password) VALUES (?,?)', ['mzevk', 'mzevk06239354'])
         }
     })
 })
