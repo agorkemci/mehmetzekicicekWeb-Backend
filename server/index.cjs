@@ -159,6 +159,17 @@ function makeCrud(table) {
 
 // Demo seed endpoint kaldırıldı
 
+// Public endpoint to allow unauthenticated users to submit a testimonial/comment
+app.post('/api/testimonials/public', (req, res) => {
+    const { author, text } = req.body || {}
+    if (!author || !text) return res.status(400).json({ error: 'author and text are required' })
+    const date = new Date().toISOString().slice(0, 10)
+    db.run('INSERT INTO testimonials (author, text, date) VALUES (?,?,?)', [author, text, date], function (err) {
+        if (err) return res.status(500).json({ error: 'db' })
+        res.json({ id: this.lastID })
+    })
+})
+
 app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`)
 })
