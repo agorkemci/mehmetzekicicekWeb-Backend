@@ -81,12 +81,25 @@ db.serialize(() => {
         author TEXT,
         text TEXT
     )`)
+    db.run(`CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        phone TEXT,
+        email TEXT,
+        topic TEXT,
+        message TEXT,
+        date TEXT,
+        read INTEGER DEFAULT 0
+    )`)
     // ek: tarih kolonu yoksa eklemeye çalış (varsa hata yoksayılır)
     db.run('ALTER TABLE testimonials ADD COLUMN date TEXT', () => {})
     // seed admin if not exists
     db.get('SELECT * FROM users WHERE username = ?', ['admin'], (err, row) => {
         if (!row) {
-            db.run('INSERT INTO users (username, password) VALUES (?,?)', ['admin', 'admin123'])
+                // use INSERT OR IGNORE to avoid race-condition duplicate insert errors on concurrent starts
+                db.run('INSERT OR IGNORE INTO users (username, password) VALUES (?,?)', ['mzevk', 'mzevk06239354'], function (err) {
+                    if (err) console.error('Error seeding user mzevk:', err.message || err)
+                })
         }
     })
 })
@@ -156,8 +169,32 @@ function makeCrud(table) {
 }
 
 ;['portfolio','blog','gallery','videos','testimonials'].forEach(makeCrud)
+// also expose messages CRUD for admin
+makeCrud('messages')
 
 // Demo seed endpoint kaldırıldı
+
+// Public endpoint to allow unauthenticated users to submit a testimonial/comment
+app.post('/api/testimonials/public', (req, res) => {
+    const { author, text } = req.body || {}
+    if (!author || !text) return res.status(400).json({ error: 'author and text are required' })
+    const date = new Date().toISOString().slice(0, 10)
+    db.run('INSERT INTO testimonials (author, text, date) VALUES (?,?,?)', [author, text, date], function (err) {
+        if (err) return res.status(500).json({ error: 'db' })
+        res.json({ id: this.lastID })
+    })
+})
+
+// Public endpoint for contact messages so the contact form persists to DB
+app.post('/api/messages/public', (req, res) => {
+    const { name, phone, email, topic, message } = req.body || {}
+    if (!name || !message) return res.status(400).json({ error: 'name and message are required' })
+    const date = new Date().toISOString()
+    db.run('INSERT INTO messages (name, phone, email, topic, message, date) VALUES (?,?,?,?,?,?)', [name, phone||'', email||'', topic||'', message, date], function (err) {
+        if (err) return res.status(500).json({ error: 'db' })
+        res.json({ id: this.lastID })
+    })
+})
 
 app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`)
