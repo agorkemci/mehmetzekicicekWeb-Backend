@@ -104,68 +104,22 @@ app.post('/api/upload', authMiddleware, upload.single('file'), (req, res) => {
     res.json({ url, filename: req.file.filename, path: req.file.path })
 })
 
-// Database initialization
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-    )`)
-    db.run(`CREATE TABLE IF NOT EXISTS portfolio (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        location TEXT,
-        tag TEXT,
-        image TEXT,
-        link TEXT,
-        transactionType TEXT,
-        propertyType TEXT
-    )`)
-    db.run(`CREATE TABLE IF NOT EXISTS blog (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        date TEXT,
-        image TEXT,
-        link TEXT,
-        text TEXT
-    )`)
-    db.run(`CREATE TABLE IF NOT EXISTS gallery (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        url TEXT,
-        category TEXT
-    )`)
-    db.run(`CREATE TABLE IF NOT EXISTS videos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        youtubeId TEXT
-    )`)
-    db.run(`CREATE TABLE IF NOT EXISTS testimonials (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        author TEXT,
-        text TEXT,
-        date TEXT
-    )`)
-    db.run(`CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        phone TEXT,
-        email TEXT,
-        topic TEXT,
-        message TEXT,
-        date TEXT,
-        read INTEGER DEFAULT 0
-    )`)
-
-    // Seed admin user if not exists
-    db.get('SELECT * FROM users WHERE username = ?', ['mzevk'], (err, row) => {
-        if (!row) {
-            db.run('INSERT OR IGNORE INTO users (username, password) VALUES (?,?)', 
-                ['mzevk', 'mzevk06239354'], 
-                err => { if (err) console.error('Error seeding admin:', err) }
-            )
+// Initialize admin user if not exists
+async function initializeAdmin() {
+    try {
+        const admin = await User.findOne({ username: 'mzevk' })
+        if (!admin) {
+            await User.create({
+                username: 'mzevk',
+                password: 'mzevk06239354'
+            })
+            console.log('Admin user created')
         }
-    })
-})
+    } catch (err) {
+        console.error('Error initializing admin:', err)
+    }
+}
+initializeAdmin()
 
 // Auth middleware
 function authMiddleware(req, res, next) {
@@ -182,21 +136,22 @@ function authMiddleware(req, res, next) {
 }
 
 // Login endpoint
-app.post('/api/auth/login', (req, res) => {
-    const { username, password } = req.body
-    db.get('SELECT * FROM users WHERE username = ? AND password = ?', 
-        [username, password], 
-        (err, row) => {
-            if (err) return res.status(500).json({ error: 'db' })
-            if (!row) return res.status(401).json({ error: 'invalid' })
-            const token = jwt.sign(
-                { id: row.id, username: row.username }, 
-                JWT_SECRET, 
-                { expiresIn: '2h' }
-            )
-            res.json({ token })
-        }
-    )
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body
+        const user = await User.findOne({ username, password })
+        if (!user) return res.status(401).json({ error: 'invalid' })
+        
+        const token = jwt.sign(
+            { id: user._id, username: user.username },
+            JWT_SECRET,
+            { expiresIn: '2h' }
+        )
+        res.json({ token })
+    } catch (err) {
+        console.error('Login error:', err)
+        res.status(500).json({ error: 'db' })
+    }
 })
 
 // Get model by table name
@@ -277,33 +232,44 @@ function makeCrud(table) {
 ;['portfolio', 'blog', 'gallery', 'videos', 'testimonials', 'messages'].forEach(makeCrud)
 
 // Public endpoint for testimonials
-app.post('/api/testimonials/public', (req, res) => {
-    const { author, text } = req.body || {}
-    if (!author || !text) return res.status(400).json({ error: 'author and text are required' })
-    const date = new Date().toISOString().slice(0, 10)
-    db.run(
-        'INSERT INTO testimonials (author, text, date) VALUES (?,?,?)',
-        [author, text, date],
-        function (err) {
-            if (err) return res.status(500).json({ error: 'db' })
-            res.json({ id: this.lastID })
-        }
-    )
+app.post('/api/testimonials/public', async (req, res) => {
+    try {
+        const { author, text } = req.body || {}
+        if (!author || !text) return res.status(400).json({ error: 'author and text are required' })
+        
+        const testimonial = await Testimonial.create({
+            author,
+            text,
+            date: new Date().toISOString().slice(0, 10)
+        })
+        
+        res.json({ id: testimonial._id })
+    } catch (err) {
+        console.error('Error creating testimonial:', err)
+        res.status(500).json({ error: 'db' })
+    }
 })
 
 // Public endpoint for contact messages
-app.post('/api/messages/public', (req, res) => {
-    const { name, phone, email, topic, message } = req.body || {}
-    if (!name || !message) return res.status(400).json({ error: 'name and message are required' })
-    const date = new Date().toISOString()
-    db.run(
-        'INSERT INTO messages (name, phone, email, topic, message, date) VALUES (?,?,?,?,?,?)',
-        [name, phone||'', email||'', topic||'', message, date],
-        function (err) {
-            if (err) return res.status(500).json({ error: 'db' })
-            res.json({ id: this.lastID })
-        }
-    )
+app.post('/api/messages/public', async (req, res) => {
+    try {
+        const { name, phone, email, topic, message } = req.body || {}
+        if (!name || !message) return res.status(400).json({ error: 'name and message are required' })
+        
+        const newMessage = await Message.create({
+            name,
+            phone: phone || '',
+            email: email || '',
+            topic: topic || '',
+            message,
+            date: new Date().toISOString()
+        })
+        
+        res.json({ id: newMessage._id })
+    } catch (err) {
+        console.error('Error creating message:', err)
+        res.status(500).json({ error: 'db' })
+    }
 })
 
 // Start server
