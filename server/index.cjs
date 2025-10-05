@@ -185,7 +185,6 @@ app.post('/api/testimonials/public', (req, res) => {
     })
 })
 
-<<<<<<< HEAD
 // Public endpoint for contact messages so the contact form persists to DB
 app.post('/api/messages/public', (req, res) => {
     const { name, phone, email, topic, message } = req.body || {}
@@ -197,8 +196,6 @@ app.post('/api/messages/public', (req, res) => {
     })
 })
 
-=======
->>>>>>> 8e81577bdc1082a493581a6fea561a326036e11e
 app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`)
 })
