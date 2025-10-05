@@ -12,7 +12,17 @@ const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'change_me_secret'
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gorkem2323:Agorkem940623%2323@cluster0.30ab7yg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 
-app.use(cors())
+// CORS configuration
+app.use(cors({
+    origin: [
+        'https://agorkem.github.io',
+        'http://localhost:5173',  // Development
+        'http://localhost:3000'   // Development
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}))
 app.use(express.json())
 
 // Connect to MongoDB
