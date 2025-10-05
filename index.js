@@ -10,7 +10,7 @@ const multer = require('multer')
 const app = express()
 const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'change_me_secret'
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gorkem2323:Agorkem940623#23@webproject.cnk1izc.mongodb.net/webproject'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gorkem2323:Agorkem940623#23@cluster0.30ab7yg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 
 app.use(cors())
 app.use(express.json())
