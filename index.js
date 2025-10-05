@@ -15,14 +15,20 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gorkem2323:Agorkem
 // CORS configuration
 app.use(cors({
     origin: [
-        'https://agorkem.github.io',
-        'http://localhost:5173',  // Development
-        'http://localhost:3000'   // Development
+        'https://agorkemci.github.io',  // Production GitHub Pages
+        'https://agorkem.github.io',    // Alternative GitHub Pages
+        'http://localhost:5173',        // Development
+        'http://localhost:3000'         // Development
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false // Changed to false since we're not using cookies
 }))
+
+// Enable pre-flight requests for all routes
+app.options('*', cors())
+
 app.use(express.json())
 
 // Connect to MongoDB
