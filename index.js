@@ -12,22 +12,18 @@ const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'change_me_secret'
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gorkem2323:Agorkem940623%2323@cluster0.30ab7yg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 
-// CORS configuration
-app.use(cors({
-    origin: [
-        'https://agorkemci.github.io',  // Production GitHub Pages
-        'https://agorkem.github.io',    // Alternative GitHub Pages
-        'http://localhost:5173',        // Development
-        'http://localhost:3000'         // Development
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    exposedHeaders: ['Content-Type', 'Authorization'],
-    credentials: false // Changed to false since we're not using cookies
-}))
-
-// Enable pre-flight requests for all routes
-app.options('*', cors())
+// Enable CORS for all origins
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    // Handle OPTIONS method
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 
 app.use(express.json())
 
