@@ -10,15 +10,34 @@ const multer = require('multer')
 const app = express()
 const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'change_me_secret'
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gorkem2323:Agorkem940623#23@cluster0.30ab7yg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://gorkem2323:Agorkem940623%2323@cluster0.30ab7yg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 
 app.use(cors())
 app.use(express.json())
 
 // Connect to MongoDB
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err))
+mongoose.connect(MONGODB_URI, {
+    dbName: 'webproject',
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000
+})
+.then(() => {
+    console.log('Connected to MongoDB')
+})
+.catch(err => {
+    console.error('MongoDB connection error:', err)
+    process.exit(1) // Exit if we can't connect to database
+})
+
+// Handle MongoDB connection errors
+mongoose.connection.on('error', err => {
+    console.error('MongoDB connection error:', err)
+})
+
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected')
+})
 
 // Define MongoDB Schemas
 const userSchema = new mongoose.Schema({
