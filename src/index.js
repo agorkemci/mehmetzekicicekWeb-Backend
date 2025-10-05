@@ -115,15 +115,21 @@ app.get('/api/blogs', async (req, res) => {
 // Testimonial Routes
 app.post('/api/testimonials/public', async (req, res) => {
     try {
-        const { name, message } = req.body;
+        const { author, text } = req.body;
         const testimonial = new Testimonial({
-            name,
-            message
+            name: author,
+            message: text
         });
 
         await testimonial.save();
-        res.status(201).json(testimonial);
+        res.status(201).json({
+            id: testimonial._id,
+            author: testimonial.name,
+            text: testimonial.message,
+            date: testimonial.createdAt
+        });
     } catch (error) {
+        console.error('Testimonial error:', error);
         res.status(500).json({ error: 'Testimonial oluşturulurken hata oluştu' });
     }
 });
